@@ -7,6 +7,7 @@ import (
   "golang.org/x/sync/semaphore"
   "net"
   "sync"
+  "time"
   "unsafe"
 )
 
@@ -17,10 +18,26 @@ type Conn struct {
   cancelFunc context.CancelFunc
   sem        *semaphore.Weighted
   once       sync.Once
+  time       time.Time
 }
 
+// 主要使用在client dial后的net.Conn 生成新的xtcp.Conn
 func NewConn(ctx context.Context, c net.Conn) *Conn {
-  return newConn(ctx, c, nil)
+  ctx,fun := context.WithCancel(ctx)
+  ctx,logger := log.WithCtx(ctx)
+
+  ret := &Conn{
+    Conn:       c,
+    mu:         make(chan struct{}, 1),
+    ctx:        ctx,
+    sem:        nil,
+    cancelFunc: fun,
+    time: time.Now(),
+  }
+
+  logger.PushPrefix(fmt.Sprintf("tcp conn(%s) to %s", ret.Id(), c.RemoteAddr().String()))
+
+  return ret
 }
 
 func newConn(ctx context.Context, c net.Conn, sem *semaphore.Weighted) *Conn {
@@ -33,6 +50,7 @@ func newConn(ctx context.Context, c net.Conn, sem *semaphore.Weighted) *Conn {
     ctx:        ctx,
     sem:        sem,
     cancelFunc: fun,
+    time: time.Now(),
   }
 
   logger.PushPrefix(fmt.Sprintf("tcp conn(%s) from %s", ret.Id(), c.RemoteAddr().String()))
@@ -84,6 +102,7 @@ func (c *Conn) GetVar(name string) (value string, ok bool) {
   return GetVarValue(c, name)
 }
 
+// 直接使用地址，可能引起不同时间的连接在同一个地址
 func (c *Conn) Id() string {
-  return fmt.Sprintf("%x", unsafe.Pointer(c))
+  return fmt.Sprintf("%x+%x", unsafe.Pointer(c), c.time.UnixNano())
 }
