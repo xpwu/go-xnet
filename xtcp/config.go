@@ -8,7 +8,7 @@ import (
 
 type Net struct {
   Listen         Listen `conf:",1、xxx.xxx.xxx.xxx:[0-9] 2、:[0-9] 3、pipe:[0-9] 4、unix:|xxx|xxx|xxx|xxx.socket:0"`
-  MaxConnections ConnectionNum
+  MaxConnections ConnectionNum `conf:",-1:not limit"`
   TLS            bool
   TlsFile        TlsFile
 }
