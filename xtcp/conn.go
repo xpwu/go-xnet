@@ -4,11 +4,11 @@ import (
   "context"
   "fmt"
   "github.com/xpwu/go-log/log"
+  "github.com/xpwu/go-xnet/connid"
   "golang.org/x/sync/semaphore"
   "net"
   "sync"
   "time"
-  "unsafe"
 )
 
 type Conn struct {
@@ -19,6 +19,7 @@ type Conn struct {
   sem        *semaphore.Weighted
   once       sync.Once
   time       time.Time
+  id         connid.Id
 }
 
 // 主要使用在client dial后的net.Conn 生成新的xtcp.Conn
@@ -33,12 +34,15 @@ func NewConn(ctx context.Context, c net.Conn) *Conn {
     sem:        nil,
     cancelFunc: fun,
     time: time.Now(),
+    id: connid.New(),
   }
 
-  logger.PushPrefix(fmt.Sprintf("tcp conn(%s) to %s", ret.Id(), c.RemoteAddr().String()))
+  logger.PushPrefix(fmt.Sprintf("tcp client conn(id=%s) to %s,", ret.Id(), c.RemoteAddr().String()))
 
   return ret
 }
+
+type coonNameKey struct {}
 
 func newConn(ctx context.Context, c net.Conn, sem *semaphore.Weighted) *Conn {
   ctx,fun := context.WithCancel(ctx)
@@ -51,9 +55,14 @@ func newConn(ctx context.Context, c net.Conn, sem *semaphore.Weighted) *Conn {
     sem:        sem,
     cancelFunc: fun,
     time: time.Now(),
+    id: connid.New(),
   }
 
-  logger.PushPrefix(fmt.Sprintf("tcp conn(%s) from %s", ret.Id(), c.RemoteAddr().String()))
+  name, ok := ctx.Value(coonNameKey{}).(string)
+  if ok {
+    logger.PushPrefix(fmt.Sprintf("%s conn(id=%s) from %s,",
+      name, ret.Id().String(), c.RemoteAddr().String()))
+  }
 
   return ret
 }
@@ -102,7 +111,6 @@ func (c *Conn) GetVar(name string) (value string, ok bool) {
   return GetVarValue(c, name)
 }
 
-// 直接使用地址，可能引起不同时间的连接在同一个地址
-func (c *Conn) Id() string {
-  return fmt.Sprintf("%x+%x", unsafe.Pointer(c), c.time.UnixNano())
+func (c *Conn) Id() connid.Id {
+  return c.id
 }
