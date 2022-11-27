@@ -38,7 +38,13 @@ func NetListenTLS(ln net.Listener, file *TlsFile) (l net.Listener, err error) {
 func NetListenConcurrent(ctx context.Context, ln net.Listener,
   maxConnection ConnectionNum) (l net.Listener, err error) {
 
-  return newConL(ctx, ln, maxConnection), nil
+  return NetListenConcurrentAndName(ctx, ln, maxConnection, "xtcp")
+}
+
+func NetListenConcurrentAndName(ctx context.Context, ln net.Listener,
+  maxConnection ConnectionNum, name string) (l net.Listener, err error) {
+
+  return newConL(context.WithValue(ctx, coonNameKey{}, name), ln, maxConnection), nil
 }
 
 type conListener struct {

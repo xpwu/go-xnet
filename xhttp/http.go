@@ -10,6 +10,10 @@ import (
 
 // 如果返回了，一定是发生错误了
 func SeverAndBlock(ctx context.Context, srv *http.Server, netC *xtcp.Net) error {
+  return SeverAndBlockWithName(ctx, srv, netC, "http")
+}
+
+func SeverAndBlockWithName(ctx context.Context, srv *http.Server, netC *xtcp.Net, name string) error {
   srv.Addr = netC.Listen.String()
 
   ln, err := xtcp.NetListen(&netC.Listen)
@@ -20,7 +24,7 @@ func SeverAndBlock(ctx context.Context, srv *http.Server, netC *xtcp.Net) error 
     _ = ln.Close()
   }(ln)
 
-  ln,err = xtcp.NetListenConcurrent(ctx, ln, netC.MaxConnections)
+  ln,err = xtcp.NetListenConcurrentAndName(ctx, ln, netC.MaxConnections, name)
   if err != nil {
     return err
   }

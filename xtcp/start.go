@@ -57,7 +57,7 @@ func StartAndBlock(name string, config *Net, handler func(conn *Conn)) {
     }(ln)
   }
 
-  ln, err = NetListenConcurrent(context.WithValue(ctx, coonNameKey{}, name), ln, config.MaxConnections)
+  ln, err = NetListenConcurrentAndName(ctx, ln, config.MaxConnections, name)
   if err != nil {
     panic(err)
   }

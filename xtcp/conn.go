@@ -59,10 +59,14 @@ func newConn(ctx context.Context, c net.Conn, sem *semaphore.Weighted) *Conn {
   }
 
   name, ok := ctx.Value(coonNameKey{}).(string)
-  if ok {
-    logger.PushPrefix(fmt.Sprintf("%s conn(id=%s) from %s,",
-      name, ret.Id().String(), c.RemoteAddr().String()))
+  if !ok {
+    name = "xtcp"
   }
+
+  logger.PushPrefix(fmt.Sprintf("%s conn(id=%s) from %s,",
+    name, ret.Id().String(), c.RemoteAddr().String()))
+
+  logger.Info("new connection")
 
   return ret
 }
@@ -97,7 +101,7 @@ func (c *Conn) Close() error {
     }
     c.cancelFunc()
     _,logger := log.WithCtx(c.ctx)
-    logger.Debug("close connection")
+    logger.Info("close connection")
     err = c.Conn.Close()
   })
   return err
