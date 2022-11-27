@@ -24,7 +24,7 @@ hostname   domainName:port
 ```
 
 ## http 
-创建服务   xhttp.SeverAndBlock(xxxx)   
+创建服务   xhttp.SeverAndBlockWithName(xxxx)   
 客户端    xhttp.NewClient(), 也可以使用 xhttp.DefaultClient
 
 ## tcp
