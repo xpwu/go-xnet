@@ -1,4 +1,4 @@
-# go-xtcp
+# go-xnet
 扩展的 http/tcp 库，支持服务间的pipe通信方式，也提供了方便创建http/tcp服务的接口。
 
 ## 支持的 url 表示方式
